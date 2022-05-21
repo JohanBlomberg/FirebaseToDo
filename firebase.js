@@ -10,8 +10,10 @@ const firebaseConfig = {
 
   };
 
-  app = firebase.initializeApp(firebaseConfig)
+const app = firebase.initializeApp(firebaseConfig)
+
+const firebaseDatabase = app.database().ref()
 
   const auth = firebase.auth();
 
-  export { auth }
+  export { auth, firebaseDatabase }

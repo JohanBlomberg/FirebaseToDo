@@ -1,9 +1,14 @@
-import { StyleSheet, Text, View, TouchableOpacity, KeyboardAvoidingView } from 'react-native'
+import { StyleSheet, Text, View, TouchableOpacity, KeyboardAvoidingView, Button } from 'react-native'
 import React from 'react'
 import { auth } from '../firebase'
+import { useNavigation } from '@react-navigation/core'
 
 const HomeScreen = () => {
+    const navigation = useNavigation()
 
+   const addNewItem = () => {
+                navigation.navigate('AddItem')
+    }
     
   return (
     <KeyboardAvoidingView 
@@ -18,7 +23,9 @@ const HomeScreen = () => {
     </View>
 
     <View>
-
+    <Button
+    title='Lägg till'
+    onPress={addNewItem}/>
     </View>
 
 </KeyboardAvoidingView>
