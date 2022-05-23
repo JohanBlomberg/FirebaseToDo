@@ -1,33 +1,42 @@
-import { StyleSheet, Text, Alert, TouchableOpacity, KeyboardAvoidingView, Button, TextInput } from 'react-native'
+import { StyleSheet, Text, KeyboardAvoidingView, Pressable, TextInput } from 'react-native'
 import { React, useState } from 'react'
-import { firestore } from '../firebase'
+import { collection, addDoc} from "firebase/firestore"; 
+import { db } from '../firebase';
+import { getAuth } from "firebase/auth";
 
 
 const AddItem = () => {
 
   const [newItem, setnewItem] = useState('')
+  const auth = getAuth();
 
-  const addNewTask = (object) => {
-    setnewItem(object)
-    console.log(newItem)
-    
-  }
-  
-  const testFirebase = () => {
-    console.log(firestore.collection('posts'))
+  const addNewTask = async () => {
+    try {
+      const docRef = await addDoc(collection(db, auth.currentUser.email), {
+        task: newItem,
+        user: auth.currentUser?.email,
+        completed: false
+      });
+      console.log("Document written with ID: ", docRef.id);
+    } catch (e) {
+      console.error("Error adding document: ", e);
+    }
+    }
 
-  }
 
   return (
     <KeyboardAvoidingView 
-    style={styles.container}
-    behavior="padding">
-      <Text>Lägg till ny rad</Text>
+    style={styles.container}>
       <TextInput 
       placeholder='Lägg till ny händelse'
-      onChangeText={addNewTask}/>
-  <Button title="test" onPress={testFirebase}/>
-
+      onChangeText={((obj) => { setnewItem(obj) })}
+      style={styles.textInput}
+      />
+  <Pressable 
+  onPress={addNewTask}
+  style={styles.button}>
+     <Text style={styles.buttonText}>Lägg till</Text>
+  </Pressable>
 
 </KeyboardAvoidingView>
   )
@@ -38,20 +47,23 @@ export default AddItem
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        flexDirection: 'row',
         justifyContect: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        marginTop: 30,
+        marginBottom: 30
     },
     button: {
-        backgroundColor: '#0782F9',
-        width: '60%',
-        padding: 15,
-        borderRadius: 10,
-        alignItems: 'center',
-        marginTop: 40
-    },
- buttonText: {
-        color: 'white',
-        fontWeight: '700',
-        fontSize: 16
-    },
+      backgroundColor: '#0782F9',
+      padding: 10,
+      borderRadius: 10,
+      marginLeft: 10
+
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: '700',
+    fontSize: 16
+},
+
 })

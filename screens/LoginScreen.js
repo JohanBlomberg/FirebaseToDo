@@ -1,20 +1,24 @@
-import { StyleSheet, Text, KeyboardAvoidingView, View, TextInput, TouchableOpacity, Button } from 'react-native'
+import { StyleSheet, Text, KeyboardAvoidingView, View, TextInput, TouchableOpacity, ScrollView } from 'react-native'
 import { useNavigation } from '@react-navigation/core'
 import { React, useState, useEffect } from 'react'
-import { auth } from '../firebase'
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+
 
 
 const LoginScreen = () => {
 
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-
+    const auth = getAuth();
    
     const navigation = useNavigation()
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(user => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
             if(user) {
                 navigation.navigate('Home')
+            }
+            else {
+                navigation.navigate('Login')
             }
         })
 
@@ -22,8 +26,7 @@ const LoginScreen = () => {
     }, [])
 
     const handleSignUp = () => {
-        auth
-        .createUserWithEmailAndPassword(email, password)
+        createUserWithEmailAndPassword(auth, email, password)
         .then(userCredentials => {
             const user = userCredentials.user;
             console.log('Registered with:',user.email)
@@ -32,12 +35,9 @@ const LoginScreen = () => {
     }
 
     const handleLogin = () => {
-        auth
-        .signInWithEmailAndPassword(email, password)
-        .then(userCredentials => {
-            const user = userCredentials.user;
+        signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
             navigation.navigate('Home')
-            console.log('Logged in with:', user.email)
         })
         .catch(error => alert(error.message))
     }
@@ -45,6 +45,7 @@ const LoginScreen = () => {
 
 
   return (
+      <ScrollView>
     <KeyboardAvoidingView 
     style={styles.container}
     behavior="padding">
@@ -82,6 +83,7 @@ const LoginScreen = () => {
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
+    </ScrollView>
   )
 }
 
@@ -95,6 +97,7 @@ const styles = StyleSheet.create({
     },
     inputContainer: {
         width: '80%',
+        marginTop: 230
     },
     input: {
     backgroundColor: 'white',
