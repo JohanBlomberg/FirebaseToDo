@@ -1,6 +1,6 @@
 import { StyleSheet, Text, KeyboardAvoidingView, Pressable, TextInput } from 'react-native'
 import { React, useState } from 'react'
-import { collection, addDoc} from "firebase/firestore"; 
+import { collection, addDoc, Timestamp} from "firebase/firestore"; 
 import { db } from '../firebase';
 import { getAuth } from "firebase/auth";
 
@@ -14,7 +14,7 @@ const AddItem = () => {
     try {
       const docRef = await addDoc(collection(db, auth.currentUser.email), {
         task: newItem,
-        user: auth.currentUser?.email,
+        created: Timestamp.now(),
         completed: false
       });
       console.log("Document written with ID: ", docRef.id);

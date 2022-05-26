@@ -2,10 +2,10 @@ import { StyleSheet, Text, View, TouchableOpacity, KeyboardAvoidingView, ScrollV
 import { React, useEffect, useState } from 'react'
 import { db } from '../firebase'
 import { useNavigation } from '@react-navigation/core'
-import { collection, getDocs  } from "firebase/firestore"; 
+import { collection, getDoc, getDocs, doc, deleteDoc , query, orderBy, onSnapshot } from "firebase/firestore"; 
 import { getAuth, signOut } from "firebase/auth";
 import AddItem from './AddItem';
-LogBox.ignoreLogs(['Warning: ...']); // 
+LogBox.ignoreLogs(['VirtualizedLists should never be nested inside plain ScrollViews with the same orientation because it can break windowing and other functionality - use another VirtualizedList-backed container instead.']); // 
 
 const HomeScreen = () => {
     const navigation = useNavigation()
@@ -25,6 +25,7 @@ const HomeScreen = () => {
               task: data
             })
             setTasks(todo)
+            console.log(todo)
             
           });
         }
@@ -40,6 +41,20 @@ const HomeScreen = () => {
     });
                 
     }
+
+    const deleteData = async () => {
+      const docRef = doc(db, auth.currentUser.email, id);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        console.log("Document data:", docSnap.data());
+        await deleteDoc(docRef)
+      } else {
+        // doc.data() will be undefined in this case
+        console.log("No such document!");
+      }
+      }
+    
     
   return (
     <ScrollView>
@@ -64,7 +79,7 @@ const HomeScreen = () => {
      <Text style={styles.doneText}>Klar</Text>
   </Pressable>
   <Pressable 
-  onPress={logOut}
+  onPress={deleteData}
   style={styles.delete}>
      <Text style={styles.deleteText}>Radera</Text>
   </Pressable>
