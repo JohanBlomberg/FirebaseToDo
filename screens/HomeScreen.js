@@ -2,22 +2,34 @@ import { StyleSheet, Text, View, TouchableOpacity, KeyboardAvoidingView, ScrollV
 import { React, useEffect, useState } from 'react'
 import { db } from '../firebase'
 import { useNavigation } from '@react-navigation/core'
-import { collection, getDoc, getDocs, doc, deleteDoc , query, orderBy, onSnapshot } from "firebase/firestore"; 
+import { collection, getDoc, getDocs, doc, deleteDoc , query, updateDoc, where } from "firebase/firestore"; 
 import { getAuth, signOut } from "firebase/auth";
 import AddItem from './AddItem';
-LogBox.ignoreLogs(['VirtualizedLists should never be nested inside plain ScrollViews with the same orientation because it can break windowing and other functionality - use another VirtualizedList-backed container instead.']); // 
+
 
 const HomeScreen = () => {
     const navigation = useNavigation()
     const [tasks, setTasks] = useState([])
+    const [done, setDone] = useState([])
+    const [progress, setProgress] = useState([])
     const auth = getAuth();
     
 
    useEffect(() => {
       const getAllTasks = async () => {
         const todo = []
-        const querySnapshot = await getDocs(collection(db, auth.currentUser.email));
-        querySnapshot.forEach((doc) => {
+        const done = []
+        const progress = []
+
+        const completedTrue = query(collection(db, auth.currentUser.email), where("completed", "==", true));
+        const inProgress = query(collection(db, auth.currentUser.email), where("inProgress", "==", true));
+        const completedFalse = query(collection(db, auth.currentUser.email), where("completed", "==", false));
+
+        const querySnapshotTrue = await getDocs(completedTrue);
+        const querySnapshotFalse = await getDocs(completedFalse);
+        const querySnapshotInProgress = await getDocs(inProgress);
+
+        querySnapshotFalse.forEach((doc) => {
             const heading = doc.data();
             const data = heading.task;
             todo.push({
@@ -25,8 +37,26 @@ const HomeScreen = () => {
               task: data
             })
             setTasks(todo)
-            console.log(todo)
-            
+          });
+
+        querySnapshotInProgress.forEach((doc) => {
+            const heading = doc.data();
+            const data = heading.task;
+            progress.push({
+              id: doc.id,
+              task: data
+            })
+            setProgress(progress)
+          });
+
+          querySnapshotTrue.forEach((doc) => {
+            const heading = doc.data();
+            const data = heading.task;
+            done.push({
+              id: doc.id,
+              task: data
+            })
+            setDone(done)
           });
         }
         getAllTasks();
@@ -42,57 +72,104 @@ const HomeScreen = () => {
                 
     }
 
-    const deleteData = async () => {
+    const deleteData = async (id) => {
       const docRef = doc(db, auth.currentUser.email, id);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        console.log("Document data:", docSnap.data());
         await deleteDoc(docRef)
       } else {
-        // doc.data() will be undefined in this case
         console.log("No such document!");
+        }
       }
+
+
+      const doneData = async (id) => {
+        const docRef = doc(db, auth.currentUser.email, id);
+        await updateDoc(docRef, {
+          inProgress: true
+        });
+
+        setTimeout( async () => {
+          await updateDoc(docRef, {
+            completed: true,
+            inProgress: false
+          })
+      }, 7000);
+        
       }
     
     
   return (
     <ScrollView>
-
-    <KeyboardAvoidingView 
-    style={styles.container}
-    behavior="padding">
-    <View style={styles.container}>
-      <Text>Välkommen! {auth.currentUser?.email}!</Text>
-    </View>
+          <View style={styles.container}>
+             <Text>Välkommen! {auth.currentUser?.email}!</Text>
+           </View>
 
     <AddItem/>
 
+    <View>
+        <Text>Nya fakturor</Text>
+         <FlatList
+            data={tasks}
+              renderItem={({ item }) => (
+                 <View style={styles.toDoRow}>
+                     <Text>{item.task}</Text>
+                        <Pressable 
+                          onPress={() => doneData(item.id)}
+                           style={styles.done}>
+                             <Text style={styles.doneText}>Klar</Text>
+                         </Pressable>
+                          <Pressable 
+                             onPress={() => deleteData(item.id)}
+                               style={styles.delete}>
+                                <Text style={styles.deleteText}>Radera</Text>
+                           </Pressable>
+                      </View>
+                   )}
+                 />
+      </View>
+
+<View>
+    <Text>Behandlar</Text>
       <FlatList
-        data={tasks}
+        data={progress}
         renderItem={({ item }) => (
           <View style={styles.toDoRow}>
-            <Text>Räkning: {item.task}</Text>
-            <Pressable 
-  onPress={logOut}
-  style={styles.done}>
-     <Text style={styles.doneText}>Klar</Text>
-  </Pressable>
-  <Pressable 
-  onPress={deleteData}
+            <Text>{item.task}</Text>
+        <Pressable 
+  onPress={() => deleteData(item.id)}
+  style={styles.delete}>
+     <Text style={styles.deleteText}>Radera</Text>
+  </Pressable>  
+          </View>
+        )}
+      />
+</View>
+
+<View style={styles.payed}>
+    <Text>Betalda</Text>
+      <FlatList
+        data={done}
+        renderItem={({ item }) => (
+          <View style={styles.toDoRow}>
+            <Text>{item.task}</Text>
+        <Pressable 
+  onPress={() => deleteData(item.id)}
   style={styles.delete}>
      <Text style={styles.deleteText}>Radera</Text>
   </Pressable>
           </View>
         )}
       />
+</View>
+
       <View>
       <TouchableOpacity
       style={styles.button}>
           <Text style={styles.buttonText} onPress={logOut}>Logga ut</Text>
       </TouchableOpacity>
       </View>
-</KeyboardAvoidingView>
 </ScrollView>
   )
 }
@@ -103,16 +180,13 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContect: 'center',
-        alignItems: 'center',
-        marginTop: 20
-    },
+        alignItems: 'center',    },
     button: {
         backgroundColor: '#0782F9',
         width: '60%',
         padding: 15,
         borderRadius: 10,
         alignItems: 'center',
-        marginTop: 300
     },
  buttonText: {
         color: 'white',
@@ -133,5 +207,8 @@ const styles = StyleSheet.create({
     },
     deleteText: {
 
+    },
+    payed: {
+      marginBottom: 300
     }
 })

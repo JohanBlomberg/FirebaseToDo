@@ -15,7 +15,8 @@ const AddItem = () => {
       const docRef = await addDoc(collection(db, auth.currentUser.email), {
         task: newItem,
         created: Timestamp.now(),
-        completed: false
+        completed: false,
+        inProgress: false
       });
       console.log("Document written with ID: ", docRef.id);
     } catch (e) {
