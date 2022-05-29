@@ -78,7 +78,6 @@ const LoginScreen = () => {
             </Text>
         </TouchableOpacity>
       </View>
-      <ActivityIndicator />
     </ScrollView>
     
   )
