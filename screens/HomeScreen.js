@@ -1,11 +1,16 @@
-import { StyleSheet, Text, View, TouchableOpacity, KeyboardAvoidingView, FlatList, Pressable, Image } from 'react-native'
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, FlatList, Pressable, Image, TextInput } from 'react-native'
 import { React, useEffect, useState } from 'react'
 import { db } from '../firebase'
 import { useNavigation } from '@react-navigation/core'
-import { collection, getDoc, getDocs, doc, deleteDoc , query, updateDoc, where } from "firebase/firestore"; 
+import { collection, addDoc, getDoc, Timestamp, getDocs, doc, deleteDoc , query, updateDoc, where } from "firebase/firestore"; 
 import { getAuth, signOut } from "firebase/auth";
-import AddItem from './AddItem';
-import done from '../assets/done.png';
+import doneIcon from '../assets/done.png';
+import deleteIcon from '../assets/delete.png';
+import filterIcon from '../assets/filter.png';
+import addIcon from '../assets/addItem.png';
+import logoutIcon from '../assets/logout.png';
+import SelectDropdown from 'react-native-select-dropdown'
+
 
 const HomeScreen = () => {
     const navigation = useNavigation()
@@ -13,55 +18,74 @@ const HomeScreen = () => {
     const [done, setDone] = useState([])
     const [progress, setProgress] = useState([])
     const auth = getAuth();
+    const [newItem, setnewItem] = useState('')
+    const [invoice, setInvoice] = useState('')
+    const invoiceCategories = ['Boende', 'Mat & Förbrukning', 'Transport', 'Telefoni & data', 'Nöjen', 'Sparande']
+
+    useEffect(() => {
+     getAllTasks()
+
+    }, [])
     
+    const getAllTasks = async () => {
+      const todo = []
+      const done = []
+      const progress = []
 
-   useEffect(() => {
-      const getAllTasks = async () => {
-        const todo = []
-        const done = []
-        const progress = []
+      const completedTrue = query(collection(db, auth.currentUser.email), where("completed", "==", true));
+      const inProgress = query(collection(db, auth.currentUser.email), where("inProgress", "==", true));
+      const completedFalse = query(collection(db, auth.currentUser.email), where("completed", "==", false));
 
-        const completedTrue = query(collection(db, auth.currentUser.email), where("completed", "==", true));
-        const inProgress = query(collection(db, auth.currentUser.email), where("inProgress", "==", true));
-        const completedFalse = query(collection(db, auth.currentUser.email), where("completed", "==", false));
+      const querySnapshotTrue = await getDocs(completedTrue);
+      const querySnapshotFalse = await getDocs(completedFalse);
+      const querySnapshotInProgress = await getDocs(inProgress);
 
-        const querySnapshotTrue = await getDocs(completedTrue);
-        const querySnapshotFalse = await getDocs(completedFalse);
-        const querySnapshotInProgress = await getDocs(inProgress);
+      querySnapshotFalse.forEach((doc) => {
+          const heading = doc.data();
+          const data = heading.task;
+          todo.push({
+            id: doc.id,
+            task: data
+          })
+          setTasks(todo)
+        });
 
-        querySnapshotFalse.forEach((doc) => {
-            const heading = doc.data();
-            const data = heading.task;
-            todo.push({
-              id: doc.id,
-              task: data
-            })
-            setTasks(todo)
+      querySnapshotInProgress.forEach((doc) => {
+          const heading = doc.data();
+          const data = heading.task;
+          progress.push({
+            id: doc.id,
+            task: data
+          })
+          setProgress(progress)
+        });
+
+        querySnapshotTrue.forEach((doc) => {
+          const heading = doc.data();
+          const data = heading.task;
+          done.push({
+            id: doc.id,
+            task: data
+          })
+          setDone(done)
+        });
+      }
+
+      const addNewTask = async () => {
+        try {
+          const docRef = await addDoc(collection(db, auth.currentUser.email), {
+            task: newItem,
+            created: Timestamp.now(),
+            completed: false,
+            inProgress: false,
+            filter: invoice
           });
-
-        querySnapshotInProgress.forEach((doc) => {
-            const heading = doc.data();
-            const data = heading.task;
-            progress.push({
-              id: doc.id,
-              task: data
-            })
-            setProgress(progress)
-          });
-
-          querySnapshotTrue.forEach((doc) => {
-            const heading = doc.data();
-            const data = heading.task;
-            done.push({
-              id: doc.id,
-              task: data
-            })
-            setDone(done)
-          });
+          console.log("Document written with ID: ", docRef.id);
+        } catch (e) {
+          console.error("Error adding document: ", e);
         }
-        getAllTasks();
-
-   }, [])
+        getAllTasks()
+        }
 
    const logOut = () => {
     signOut(auth).then(() => {
@@ -81,6 +105,7 @@ const HomeScreen = () => {
       } else {
         console.log("No such document!");
         }
+        getAllTasks()
       }
 
 
@@ -89,14 +114,14 @@ const HomeScreen = () => {
         await updateDoc(docRef, {
           inProgress: true
         });
-
+          getAllTasks()
         setTimeout( async () => {
           await updateDoc(docRef, {
             completed: true,
             inProgress: false
           })
       }, 7000);
-        
+      
       }
 
       const filter = () => {
@@ -105,101 +130,133 @@ const HomeScreen = () => {
     
     
   return (
-    <KeyboardAvoidingView>
-          <View style={styles.container}>
-             <Text>Välkommen! {auth.currentUser?.email}!</Text>
-           </View>
-
-    <AddItem/>
-
-    <View>
-      <Pressable 
-      onPress={filter}>
-      <Text>Filter</Text>
-      </Pressable>
-    </View>
-
-    <View>
-        <Text>Nya fakturor</Text>
-         <FlatList
-            data={tasks}
-              renderItem={({ item }) => (
-                 <View style={styles.toDoRow}>
-                     <Text>{item.task}</Text>
-                        <TouchableOpacity 
-                          onPress={() => doneData(item.id)}
-                           style={styles.done}>
-                             <Image source={done}/>
-                         </TouchableOpacity>
-                          <Pressable 
-                             onPress={() => deleteData(item.id)}
-                               style={styles.delete}>
-                                <Text style={styles.deleteText}>Radera</Text>
-                           </Pressable>
-                      </View>
-                   )}
-                 />
+    <View style={styles.container}>
+        <View style={styles.header}>
+       <Text>Välkommen, {auth.currentUser?.email}!</Text>
+        <TouchableOpacity 
+          onPress={filter}>
+                <Image style={styles.filterIcon} source={filterIcon}/>
+        </TouchableOpacity>
+          </View>
+         <View 
+           style={styles.addEventField}>
+           <TextInput 
+             placeholder='Lägg till ny händelse'
+               onChangeText={((obj) => { setnewItem(obj) })}
+                style={styles.textInput}
+            />
+        
+</View>
+            <View style={styles.addEventIcons}>
+            <SelectDropdown
+              data={invoiceCategories}
+                 onSelect={(selectedItem) => setInvoice(selectedItem)}
+                  defaultButtonText='Välj kategori'/>
+              <TouchableOpacity 
+                onPress={addNewTask}>
+                  <Image style={styles.filterIcon} source={addIcon}/>
+              </TouchableOpacity>
+               
       </View>
 
-<View>
-    <Text>Behandlar</Text>
+      <View
+         style={styles.border}
+      />
+  <View>
+    <Text style={styles.title}>Nya fakturor</Text>
+      <FlatList
+        data={tasks}
+          renderItem={({ item }) => (
+              <View style={styles.toDoRow}>
+                <Text>{item.task}</Text>
+
+                  <TouchableOpacity 
+                    onPress={() => doneData(item.id)}
+                      style={styles.done}>
+                        <Image style={styles.doneButton} source={doneIcon}/>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                    onPress={() => deleteData(item.id)}
+                      style={styles.delete}>
+                        <Image style={styles.deleteButton} source={deleteIcon}/>
+                  </TouchableOpacity>
+              </View>
+            )}
+        />
+    </View>
+    <View
+         style={styles.border}
+      />
+  <View style={styles.inProgressStyle}>
+    <Text style={styles.title}>Behandlar</Text>
       <FlatList
         data={progress}
-        renderItem={({ item }) => (
-          <View style={styles.toDoRow}>
-            <Text>{item.task}</Text>
-        <Pressable 
-  onPress={() => deleteData(item.id)}
-  style={styles.delete}>
-     <Text style={styles.deleteText}>Radera</Text>
-  </Pressable>  
-          </View>
+          renderItem={({ item }) => (
+            <View style={styles.toDoRow}>
+              <Text>{item.task}</Text>
+                <TouchableOpacity 
+                  onPress={() => deleteData(item.id)}
+                    style={styles.delete}>
+                      <Image style={styles.deleteButton} source={deleteIcon}/>
+                </TouchableOpacity>
+            </View>
         )}
       />
-</View>
-
-<View style={styles.payed}>
-    <Text>Betalda</Text>
+  </View>
+  <View
+         style={styles.border}
+      />
+  <View style={styles.payed}>
+    <Text style={styles.title}>Betalda</Text>
       <FlatList
         data={done}
-        renderItem={({ item }) => (
-          <View style={styles.toDoRow}>
-            <Text>{item.task}</Text>
-        <Pressable 
-  onPress={() => deleteData(item.id)}
-  style={styles.delete}>
-     <Text style={styles.deleteText}>Radera</Text>
-  </Pressable>
-          </View>
+          renderItem={({ item }) => (
+            <View style={styles.toDoRow}>
+              <Text>{item.task}</Text>
+                <TouchableOpacity 
+                  onPress={() => deleteData(item.id)}
+                    style={styles.delete}>
+                      <Image style={styles.deleteButton} source={deleteIcon}/>
+                </TouchableOpacity>
+            </View>
         )}
       />
-</View>
-
-      <View>
-      <TouchableOpacity
-      style={styles.button}>
-          <Text style={styles.buttonText} onPress={logOut}>Logga ut</Text>
-      </TouchableOpacity>
-      </View>
-</KeyboardAvoidingView>
+  </View>
+  <View
+         style={styles.border}
+      />
+  <View>
+    <TouchableOpacity
+        onPress={logOut}>
+          <Image style={styles.logoutButton} source={logoutIcon}/>
+     </TouchableOpacity>
+    </View>
+  </View>
   )
 }
 
-export default HomeScreen
+export default  HomeScreen
 
 const styles = StyleSheet.create({
     container: {
+      marginTop: 10,
         flex: 1,
-        justifyContect: 'center',
-        alignItems: 'center',   
        },
+       addEventContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap'
+    },
+    header: {
+      flexDirection: 'row',
+      padding: 15
+    },
     button: {
         backgroundColor: '#0782F9',
-        width: '60%',
+        width: '30%',
         padding: 15,
         borderRadius: 10,
         alignItems: 'center',
-        marginBottom: 300
     },
  buttonText: {
         color: 'white',
@@ -209,19 +266,38 @@ const styles = StyleSheet.create({
     toDoRow: {
      flexDirection: 'row'
     },
-    done: {
-      backgroundColor: '#00D100',
+    doneButton: {
+      width: 25,
+      height: 20
     },
-    doneText: {
-
+    deleteButton: {
+      width: 25,
+      height: 20
     },
-    delete: {
-      backgroundColor: '#BF181D'
+    filterIcon: {
+      marginLeft: 30,
+      width: 40,
+      height: 40
     },
-    deleteText: {
-
+    logoutButton: {
+      width: 80,
+      height: 80
     },
-    payed: {
-      marginBottom: 300
-    }
+    border: {
+      paddingTop: 10,
+      borderBottomColor: '#0782F9',
+      borderBottomWidth: 1,
+    },
+    addEventField: {
+      paddingTop: 10,
+      alignItems: 'center',
+      flexDirection: 'row',
+    },
+    addEventIcons: {
+      flexDirection: 'row'
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: 'bold'
+    },
 })

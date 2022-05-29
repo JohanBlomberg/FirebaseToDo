@@ -99,7 +99,6 @@ const styles = StyleSheet.create({
         marginTop: 80
     },
     logo: {
-    margintop: 100,
     width: '80%', 
     height: 180,
     borderRadius: 10
