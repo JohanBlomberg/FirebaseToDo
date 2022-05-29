@@ -2,6 +2,7 @@ import { StyleSheet, Text, KeyboardAvoidingView, View, TextInput, TouchableOpaci
 import { useNavigation } from '@react-navigation/core'
 import { React, useState, useEffect } from 'react'
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+import Logo from "../IMG/Logo.PNG"
 
 
 const LoginScreen = () => {
