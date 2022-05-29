@@ -1,8 +1,9 @@
-import { StyleSheet, Text, KeyboardAvoidingView, View, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native'
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Image } from 'react-native'
 import { useNavigation } from '@react-navigation/core'
 import { React, useState, useEffect } from 'react'
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
-import Logo from "../IMG/Logo.PNG"
+import logo from './assets/Logo.PNG'
+
 
 
 const LoginScreen = () => {
