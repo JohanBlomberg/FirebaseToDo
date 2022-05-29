@@ -1,10 +1,11 @@
-import { StyleSheet, Text, View, TouchableOpacity, KeyboardAvoidingView, FlatList, Pressable } from 'react-native'
+import { StyleSheet, Text, View, TouchableOpacity, KeyboardAvoidingView, FlatList, Pressable, Image } from 'react-native'
 import { React, useEffect, useState } from 'react'
 import { db } from '../firebase'
 import { useNavigation } from '@react-navigation/core'
 import { collection, getDoc, getDocs, doc, deleteDoc , query, updateDoc, where } from "firebase/firestore"; 
 import { getAuth, signOut } from "firebase/auth";
 import AddItem from './AddItem';
+import done from '../assets/done.png';
 
 const HomeScreen = () => {
     const navigation = useNavigation()
@@ -125,11 +126,11 @@ const HomeScreen = () => {
               renderItem={({ item }) => (
                  <View style={styles.toDoRow}>
                      <Text>{item.task}</Text>
-                        <Pressable 
+                        <TouchableOpacity 
                           onPress={() => doneData(item.id)}
                            style={styles.done}>
-                             <Text style={styles.doneText}>Klar</Text>
-                         </Pressable>
+                             <Image source={done}/>
+                         </TouchableOpacity>
                           <Pressable 
                              onPress={() => deleteData(item.id)}
                                style={styles.delete}>
