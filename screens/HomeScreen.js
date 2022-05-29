@@ -191,7 +191,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContect: 'center',
         alignItems: 'center',   
-        marginTop: 100
        },
     button: {
         backgroundColor: '#0782F9',
@@ -199,6 +198,7 @@ const styles = StyleSheet.create({
         padding: 15,
         borderRadius: 10,
         alignItems: 'center',
+        marginBottom: 300
     },
  buttonText: {
         color: 'white',

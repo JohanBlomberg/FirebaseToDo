@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Image 
 import { useNavigation } from '@react-navigation/core'
 import { React, useState, useEffect } from 'react'
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
-import logo from './assets/Logo.PNG'
+import logo from '../assets/logo.png'; 
 
 
 
@@ -47,8 +47,10 @@ const LoginScreen = () => {
 
   return (
       <ScrollView>
+          <View style={styles.container}>
+      <Image source={logo} style={styles.logo} /> 
       <View style={styles.inputContainer}>
-       
+
           <TextInput 
             placeholder="Email"
             value={email}
@@ -80,6 +82,7 @@ const LoginScreen = () => {
             </Text>
         </TouchableOpacity>
       </View>
+      </View>
     </ScrollView>
     
   )
@@ -93,10 +96,16 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        marginTop: 80
+    },
+    logo: {
+    margintop: 100,
+    width: '80%', 
+    height: 180,
+    borderRadius: 10
     },
     inputContainer: {
         width: '80%',
-        marginTop: 230
     },
     input: {
     backgroundColor: 'white',
