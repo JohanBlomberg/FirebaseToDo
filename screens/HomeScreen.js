@@ -1,11 +1,10 @@
-import { StyleSheet, Text, View, TouchableOpacity, KeyboardAvoidingView, ScrollView, FlatList, LogBox, Pressable } from 'react-native'
+import { StyleSheet, Text, View, TouchableOpacity, KeyboardAvoidingView, FlatList, Pressable } from 'react-native'
 import { React, useEffect, useState } from 'react'
 import { db } from '../firebase'
 import { useNavigation } from '@react-navigation/core'
 import { collection, getDoc, getDocs, doc, deleteDoc , query, updateDoc, where } from "firebase/firestore"; 
 import { getAuth, signOut } from "firebase/auth";
 import AddItem from './AddItem';
-
 
 const HomeScreen = () => {
     const navigation = useNavigation()
@@ -98,15 +97,26 @@ const HomeScreen = () => {
       }, 7000);
         
       }
+
+      const filter = () => {
+        navigation.navigate('FilterItem')
+      }
     
     
   return (
-    <ScrollView>
+    <KeyboardAvoidingView>
           <View style={styles.container}>
              <Text>Välkommen! {auth.currentUser?.email}!</Text>
            </View>
 
     <AddItem/>
+
+    <View>
+      <Pressable 
+      onPress={filter}>
+      <Text>Filter</Text>
+      </Pressable>
+    </View>
 
     <View>
         <Text>Nya fakturor</Text>
@@ -170,7 +180,7 @@ const HomeScreen = () => {
           <Text style={styles.buttonText} onPress={logOut}>Logga ut</Text>
       </TouchableOpacity>
       </View>
-</ScrollView>
+</KeyboardAvoidingView>
   )
 }
 
@@ -180,7 +190,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContect: 'center',
-        alignItems: 'center',    },
+        alignItems: 'center',   
+        marginTop: 100
+       },
     button: {
         backgroundColor: '#0782F9',
         width: '60%',
