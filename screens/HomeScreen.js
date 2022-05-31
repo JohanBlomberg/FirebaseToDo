@@ -37,11 +37,10 @@ const HomeScreen = () => {
       const completedFalse = query(collection(db, auth.currentUser.email), where("completed", "==", false));
 
       const querySnapshotTrue = await getDocs(completedTrue);
-      const querySnapshotFalse = await getDocs(completedFalse);
       const querySnapshotInProgress = await getDocs(inProgress);
 
-      
-      querySnapshotFalse.forEach((doc) => {
+      const querySnapshotFalse = onSnapshot(completedFalse, (querySnapshot) => {
+        querySnapshot.forEach((doc) => {
           const heading = doc.data();
           const data = heading.task;
           todo.push({
@@ -49,7 +48,9 @@ const HomeScreen = () => {
             task: data
           })
           setTasks(todo)
-        });
+        })
+      })
+
 
       querySnapshotInProgress.forEach((doc) => {
           const heading = doc.data();
@@ -86,6 +87,7 @@ const HomeScreen = () => {
           console.error("Error adding document: ", e);
         }
         getAllTasks()
+        querySnapshotFalse()
         }
 
    const logOut = () => {
