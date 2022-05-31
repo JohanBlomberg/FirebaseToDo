@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, FlatList, Pressable, Image, TextInput } from 'react-native'
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, FlatList, Pressable, Image, TextInput } from 'react-native'
 import { React, useEffect, useState } from 'react'
 import { db } from '../firebase'
 import { useNavigation } from '@react-navigation/core'
@@ -40,6 +40,7 @@ const HomeScreen = () => {
       const querySnapshotFalse = await getDocs(completedFalse);
       const querySnapshotInProgress = await getDocs(inProgress);
 
+      
       querySnapshotFalse.forEach((doc) => {
           const heading = doc.data();
           const data = heading.task;
@@ -130,6 +131,7 @@ const HomeScreen = () => {
     
     
   return (
+    <ScrollView>
     <View style={styles.container}>
         <View style={styles.header}>
        <Text>Välkommen, {auth.currentUser?.email}!</Text>
@@ -150,6 +152,7 @@ const HomeScreen = () => {
             <View style={styles.addEventIcons}>
             <SelectDropdown
               data={invoiceCategories}
+                style={styles.dropdown}
                  onSelect={(selectedItem) => setInvoice(selectedItem)}
                   defaultButtonText='Välj kategori'/>
               <TouchableOpacity 
@@ -162,25 +165,34 @@ const HomeScreen = () => {
       <View
          style={styles.border}
       />
-  <View>
+  <View style={styles.newInvoices}>
     <Text style={styles.title}>Nya fakturor</Text>
+      <View style={styles.title2Container}>
+      <Text style={styles.title2}>Namn</Text>
+      <Text style={styles.title2}>Klar</Text>
+      <Text style={styles.title2}>Radera</Text>
+      </View>
       <FlatList
         data={tasks}
           renderItem={({ item }) => (
               <View style={styles.toDoRow}>
-                <Text>{item.task}</Text>
-
+                  
+                <Text style={styles.itemStyle}>{item.task}</Text>
+                  
+                  
                   <TouchableOpacity 
                     onPress={() => doneData(item.id)}
-                      style={styles.done}>
+                    style={styles.itemStyle}>
                         <Image style={styles.doneButton} source={doneIcon}/>
                   </TouchableOpacity>
 
+
                   <TouchableOpacity 
                     onPress={() => deleteData(item.id)}
-                      style={styles.delete}>
+                    style={styles.itemStyle}>
                         <Image style={styles.deleteButton} source={deleteIcon}/>
                   </TouchableOpacity>
+
               </View>
             )}
         />
@@ -188,7 +200,7 @@ const HomeScreen = () => {
     <View
          style={styles.border}
       />
-  <View style={styles.inProgressStyle}>
+  <View style={styles.invoicesInProgress}>
     <Text style={styles.title}>Behandlar</Text>
       <FlatList
         data={progress}
@@ -207,7 +219,7 @@ const HomeScreen = () => {
   <View
          style={styles.border}
       />
-  <View style={styles.payed}>
+  <View style={styles.invoicesInProgress}>
     <Text style={styles.title}>Betalda</Text>
       <FlatList
         data={done}
@@ -226,13 +238,14 @@ const HomeScreen = () => {
   <View
          style={styles.border}
       />
-  <View>
+  <View style={styles.logoutButtonView}>
     <TouchableOpacity
         onPress={logOut}>
           <Image style={styles.logoutButton} source={logoutIcon}/>
      </TouchableOpacity>
     </View>
   </View>
+  </ScrollView>
   )
 }
 
@@ -264,7 +277,7 @@ const styles = StyleSheet.create({
         fontSize: 16
     },
     toDoRow: {
-     flexDirection: 'row'
+     flexDirection: 'row',
     },
     doneButton: {
       width: 25,
@@ -281,7 +294,8 @@ const styles = StyleSheet.create({
     },
     logoutButton: {
       width: 80,
-      height: 80
+      height: 80,
+      alignItems: 'center'
     },
     border: {
       paddingTop: 10,
@@ -291,13 +305,39 @@ const styles = StyleSheet.create({
     addEventField: {
       paddingTop: 10,
       alignItems: 'center',
-      flexDirection: 'row',
+      width: '80%',
+      height: 40,
+      padding: 10,
+      marginBottom: 10
     },
     addEventIcons: {
       flexDirection: 'row'
     },
     title: {
       fontSize: 20,
-      fontWeight: 'bold'
+      fontWeight: 'bold',
+      padding: 10,
+    },   
+    title2: {
+      flex: 1,
+      paddingLeft: 30,
+      paddingBottom: 20,
+      fontSize: 12,
+     color: '#969799'
+    },
+    title2Container: {
+      flexDirection: 'row'
+    },
+    newInvoices: {
+      alignItems: 'center'
+    },
+    invoicesInProgress: {
+      alignItems: 'center'
+    },
+    logoutButtonView: {
+      alignItems: 'center'
+    },
+    itemStyle: {
+  
     },
 })
