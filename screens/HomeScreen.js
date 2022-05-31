@@ -6,7 +6,6 @@ import { collection, addDoc, getDoc, Timestamp, getDocs, doc, deleteDoc , query,
 import { getAuth, signOut } from "firebase/auth";
 import doneIcon from '../assets/done.png';
 import deleteIcon from '../assets/delete.png';
-import filterIcon from '../assets/filter.png';
 import addIcon from '../assets/addItem.png';
 import logoutIcon from '../assets/logout.png';
 import SelectDropdown from 'react-native-select-dropdown'
