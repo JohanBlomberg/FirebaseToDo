@@ -20,6 +20,7 @@ const AddItem = () => {
         created: Timestamp.now(),
         completed: false,
         inProgress: false,
+        done: false,
         filter: invoice
       });
       console.log("Document written with ID: ", docRef.id);

@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, TouchableOpacity, ScrollView, FlatList, Pressab
 import { React, useEffect, useState } from 'react'
 import { db } from '../firebase'
 import { useNavigation } from '@react-navigation/core'
-import { collection, addDoc, getDoc, Timestamp, getDocs, doc, deleteDoc , query, updateDoc, where } from "firebase/firestore"; 
+import { collection, addDoc, getDoc, Timestamp, getDocs, doc, deleteDoc , query, updateDoc, where, onSnapshot } from "firebase/firestore"; 
 import { getAuth, signOut } from "firebase/auth";
 import doneIcon from '../assets/done.png';
 import deleteIcon from '../assets/delete.png';
@@ -10,6 +10,7 @@ import filterIcon from '../assets/filter.png';
 import addIcon from '../assets/addItem.png';
 import logoutIcon from '../assets/logout.png';
 import SelectDropdown from 'react-native-select-dropdown'
+
 
 
 const HomeScreen = () => {
@@ -24,22 +25,12 @@ const HomeScreen = () => {
 
     useEffect(() => {
      getAllTasks()
+       }, [])
 
-    }, [])
-    
-    const getAllTasks = async () => {
+    const getSnapshotNewInvoices = () => {
       const todo = []
-      const done = []
-      const progress = []
-
-      const completedTrue = query(collection(db, auth.currentUser.email), where("completed", "==", true));
-      const inProgress = query(collection(db, auth.currentUser.email), where("inProgress", "==", true));
-      const completedFalse = query(collection(db, auth.currentUser.email), where("completed", "==", false));
-
-      const querySnapshotTrue = await getDocs(completedTrue);
-      const querySnapshotInProgress = await getDocs(inProgress);
-
-      const querySnapshotFalse = onSnapshot(completedFalse, (querySnapshot) => {
+      const q = query(collection(db, auth.currentUser.email), where("completed", "==", false));
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
         querySnapshot.forEach((doc) => {
           const heading = doc.data();
           const data = heading.task;
@@ -50,7 +41,90 @@ const HomeScreen = () => {
           setTasks(todo)
         })
       })
+    }
 
+    const renderFilter =  (filter) => {
+      const todo = [];
+      
+      const q = query(collection(db, auth.currentUser.email), where("filter", "==", filter), where('completed', '==', false));
+       
+          const unsubscribe = onSnapshot(q, (querySnapshot) => {
+
+            if( querySnapshot.empty) {
+              todo.push({
+                message: 'Här var det tomt',
+              })
+              setTasks(todo)
+            } else { 
+              querySnapshot.forEach((doc) => {
+              const heading = doc.data();
+              const data = heading.task;
+              todo.push({
+                id: doc.id,
+                task: data
+              })
+            setTasks(todo)
+          })}
+      })
+    }
+
+
+    const getSnapshotInProgressInvoices = () => {
+      const progress = []
+      const q = query(collection(db, auth.currentUser.email), where("inProgress", "==", true));
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+          const heading = doc.data();
+          const data = heading.task;
+          progress.push({
+            id: doc.id,
+            task: data
+          })
+          setProgress(progress)
+        })
+      })
+    }
+
+    const getSnapshotDoneQuery = () => {
+      const done = []
+      const q = query(collection(db, auth.currentUser.email), where("done", "==", true));
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+          const heading = doc.data();
+          const data = heading.task;
+          done.push({
+            id: doc.id,
+            task: data
+          })
+          setDone(done)
+        })
+      })
+    }
+    
+    const getAllTasks = async () => {
+      
+      const done = []
+      const progress = []
+      const todo = []
+
+      const completedDone = query(collection(db, auth.currentUser.email), where("done", "==", true));
+      const inProgress = query(collection(db, auth.currentUser.email), where("inProgress", "==", true));
+      const completedFalse = query(collection(db, auth.currentUser.email), where("completed", "==", false));
+     
+
+      const querySnapshotDone = await getDocs(completedDone);
+      const querySnapshotInProgress = await getDocs(inProgress);
+      const querySnapshotFalse = await getDocs(completedFalse);
+
+      querySnapshotFalse.forEach((doc) => {
+        const heading = doc.data();
+        const data = heading.task;
+        todo.push({
+          id: doc.id,
+          task: data
+        })
+        setTasks(todo)
+      });
 
       querySnapshotInProgress.forEach((doc) => {
           const heading = doc.data();
@@ -62,7 +136,7 @@ const HomeScreen = () => {
           setProgress(progress)
         });
 
-        querySnapshotTrue.forEach((doc) => {
+        querySnapshotDone.forEach((doc) => {
           const heading = doc.data();
           const data = heading.task;
           done.push({
@@ -80,15 +154,15 @@ const HomeScreen = () => {
             created: Timestamp.now(),
             completed: false,
             inProgress: false,
+            done: false,
             filter: invoice
           });
           console.log("Document written with ID: ", docRef.id);
         } catch (e) {
           console.error("Error adding document: ", e);
-        }
-        getAllTasks()
-        querySnapshotFalse()
-        }
+        }     
+        getSnapshotNewInvoices()
+      }
 
    const logOut = () => {
     signOut(auth).then(() => {
@@ -108,39 +182,42 @@ const HomeScreen = () => {
       } else {
         console.log("No such document!");
         }
-        getAllTasks()
+        getSnapshotDoneQuery();
+        getSnapshotNewInvoices()
+        getSnapshotInProgressInvoices()
       }
 
 
       const doneData = async (id) => {
+      
         const docRef = doc(db, auth.currentUser.email, id);
         await updateDoc(docRef, {
-          inProgress: true
+          inProgress: true,
+          completed: true
         });
-          getAllTasks()
+        getSnapshotNewInvoices()
+        getSnapshotInProgressInvoices()
         setTimeout( async () => {
           await updateDoc(docRef, {
-            completed: true,
-            inProgress: false
+            inProgress: false,
+            done: true
           })
-      }, 7000);
-      
+          getSnapshotInProgressInvoices()
+      }, 5000)
+      setTimeout( () => {
+        getSnapshotDoneQuery();
+        getSnapshotNewInvoices()
+        getSnapshotInProgressInvoices()
+      }, 6000);
       }
 
-      const filter = () => {
-        navigation.navigate('FilterItem')
-      }
-    
-    
+     
   return (
     <ScrollView>
     <View style={styles.container}>
         <View style={styles.header}>
        <Text>Välkommen, {auth.currentUser?.email}!</Text>
-        <TouchableOpacity 
-          onPress={filter}>
-                <Image style={styles.filterIcon} source={filterIcon}/>
-        </TouchableOpacity>
+
           </View>
          <View 
            style={styles.addEventField}>
@@ -169,6 +246,10 @@ const HomeScreen = () => {
       />
   <View style={styles.newInvoices}>
     <Text style={styles.title}>Nya fakturor</Text>
+    <SelectDropdown
+       data={invoiceCategories}
+       onSelect={(selectedItem) => renderFilter(selectedItem)}
+       defaultButtonText='Filtrera'/>
       <View style={styles.title2Container}>
       <Text style={styles.title2}>Namn</Text>
       <Text style={styles.title2}>Klar</Text>
@@ -177,11 +258,15 @@ const HomeScreen = () => {
       <FlatList
         data={tasks}
           renderItem={({ item }) => (
+              item.task == null   ? 
+              <View>
+                <Text>{item.message}</Text>
+              </View>
+              :
               <View style={styles.toDoRow}>
                   
                 <Text style={styles.itemStyle}>{item.task}</Text>
-                  
-                  
+                                    
                   <TouchableOpacity 
                     onPress={() => doneData(item.id)}
                     style={styles.itemStyle}>

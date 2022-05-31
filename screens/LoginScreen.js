@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Image 
 import { useNavigation } from '@react-navigation/core'
 import { React, useState, useEffect } from 'react'
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
-import logo from '../assets/logo.png'; 
+import logo from '../assets/logo.png'
 
 
 
